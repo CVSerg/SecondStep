@@ -3,52 +3,74 @@ import java.util.Scanner;
 public class Main {
     public static void main(String[] args) throws Exception {
         System.out.println("Введите выражение: ");
-        Scanner scn = new Scanner(System.in);
-        String exp = scn.nextLine();
+        Scanner scanner = new Scanner(System.in);
+        String exp = scanner.nextLine();
+
+        char action = getAction(exp);
+        String[] data = splitExpression(exp, action);
+        expInput(data, action);
+
+        String result = calcResult(data, action);
+        printInQuotes(result);
+    }
+
+    static char getAction(String exp) throws Exception {
         String[] a = new String[] {"+", "-", "*", "/"};
-        char action = ' ';
-        for (int i = 0; i < a.length; i++) {
-            if (exp.contains(a[i])) {
-                action = a[i].charAt(0);
-                break;
+        for (String b : a) {
+            if (exp.contains(b)) {
+                return b.charAt(0);
             }
         }
-        if (action == ' ') throw new Exception("Некорректный знак действия! ");
-        String[] data = exp.split(" \\" + action + " ");
-        if (data[0].length() > 10 || data[1].length() > 10) throw new Exception("Введено больше 10 символов! ");
-        if (action == '*' || action == '/') {
-            if (data[1].contains("\"")) throw new Exception("Строку можно делить или умножать только на число! ");
+        throw new Exception("Некорректный знак действия! ");
+    }
+
+    static String[] splitExpression(String exp, char action) {
+        return exp.split(" \\" + action + " ");
+    }
+
+    static void expInput(String[] data, char action) throws Exception {
+        if (data[0].length() > 11 || data[1].length() > 11) {
+            throw new Exception("Введено больше 10 символов! ");
+        }
+        if ((action == '*' || action == '/') && data[1].contains("\"")) {
+            throw new Exception("Строку можно делить или умножать только на число! ");
         }
         for (int i = 0; i < data.length; i++) {
             data[i] = data[i].replace("\"", "");
         }
-        String result = switch (action) {
+    }
+
+    static String calcResult(String[] data, char action) {
+        return switch (action) {
             case '+' -> data[0] + data[1];
-            case '*' -> {
-                int multiplier = Integer.parseInt(data[1]);
-                String r = "";
-                for (int i = 0; i < multiplier; i++) {
-                    r += data[0];
-                }
-                yield r;
-            }
-            case '-' -> {
-                int index = data[0].indexOf(data[1]);
-                if (index == -1) yield data[0];
-                String r = data[0].substring(0, index);
-                r += data[0].substring(index + data[1].length());
-                yield r;
-            }
-            case '/' -> {
-                int newLen = data[0].length() / Integer.parseInt(data[1]);
-                yield data[0].substring(0, newLen);
-            }
+            case '*' -> multiplyString(data[0], Integer.parseInt(data[1]));
+            case '-' -> subtractString(data[0], data[1]);
+            case '/' -> divideString(data[0], Integer.parseInt(data[1]));
             default -> throw new IllegalArgumentException("Exception");
         };
-        printInQuotes(result);
     }
+
+    static String multiplyString(String str, int multiplier) {
+        StringBuilder result = new StringBuilder();
+        for (int i = 0; i < multiplier; i++) {
+            result.append(str);
+        }
+        return result.toString();
+    }
+
+    static String subtractString(String str, String toRemove) {
+        int index = str.indexOf(toRemove);
+        if (index == -1) return str;
+        return str.substring(0, index) + str.substring(index + toRemove.length());
+    }
+
+    static String divideString(String str, int divisor) {
+        int newLen = str.length() / divisor;
+        return str.substring(0, newLen);
+    }
+
     static void printInQuotes(String text) {
-        if (text.length() > 40) text = text.substring(40) + "...";
-        System.out.println(text);
+        if (text.length() > 40) text = text.substring(0, 40) + "...";
+        System.out.println('"'+text+'"');
     }
 }
